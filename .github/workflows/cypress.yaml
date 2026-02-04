@@ -6,7 +6,8 @@ on:
   pull_request:
 
 jobs:
-  cypress-run:
+  cypress:
+    if: contains(github.event.pull_request.labels.*.name, 'run-cypress-PR')
     runs-on: ubuntu-latest
 
     steps:
