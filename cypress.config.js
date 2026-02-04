@@ -1,10 +1,21 @@
-import { defineConfig } from "cypress";
+const { defineConfig } = require("cypress");
 
-export default defineConfig({
+module.exports = defineConfig({
+  reporter: "mochawesome",
+
+  reporterOptions: {
+    reportDir: "cypress/reports",
+    overwrite: false,
+    html: false,
+    json: true,
+  },
+
+  screenshotsFolder: "cypress/screenshots",
+
   e2e: {
     baseUrl: "https://opensource-demo.orangehrmlive.com",
-    specPattern: "cypress/e2e/**/*.cy.js",
-    supportFile: "cypress/support/e2e.js",
-    video: false,
+    setupNodeEvents(on, config) {
+      return config;
+    },
   },
 });
