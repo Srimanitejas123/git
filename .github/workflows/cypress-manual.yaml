@@ -1,0 +1,42 @@
+name: Cypress Manual Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: "Test suite"
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - sanity
+
+jobs:
+  cypress:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.18.0
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cypress tests
+        run: npx cypress run --spec "cypress/e2e/${{ inputs.suite }}/**/*.cy.js"
+
+      - name: Upload Cypress Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-artifacts
+          path: |
+            cypress/screenshots
+            cypress/reports
