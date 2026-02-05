@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: "Test suite"
+        description: "Test suite to run"
         required: true
         default: smoke
         type: choice
@@ -14,29 +14,53 @@ on:
 
 jobs:
   cypress:
+    name: Cypress (${{ matrix.browser }} | ${{ inputs.suite }})
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [electron, chrome]
+
     steps:
-      - name: Checkout code
+      # 1️⃣ Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      # 2️⃣ Setup Node with caching
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18.18.0
+          cache: "npm"
 
+      # 3️⃣ Install dependencies (deterministic)
       - name: Install dependencies
         run: npm ci
 
-      - name: Run Cypress tests
-        run: npx cypress run --spec "cypress/e2e/${{ inputs.suite }}/**/*.cy.js"
+      # 4️⃣ Print execution context (debug friendly)
+      - name: Print run details
+        run: |
+          echo "Suite      : ${{ inputs.suite }}"
+          echo "Browser    : ${{ matrix.browser }}"
+          echo "Node       : $(node -v)"
+          echo "NPM        : $(npm -v)"
 
-      - name: Upload Cypress Artifacts
+      # 5️⃣ Run Cypress tests
+      - name: Run Cypress tests
+        run: |
+          npx cypress run \
+            --browser ${{ matrix.browser }} \
+            --spec "cypress/e2e/${{ inputs.suite }}/**/*.cy.js"
+
+      # 6️⃣ Upload reports, screenshots, videos (always)
+      - name: Upload Cypress artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-artifacts
+          name: cypress-${{ matrix.browser }}-${{ inputs.suite }}
           path: |
-            cypress/screenshots
             cypress/reports
+            cypress/screenshots
+            cypress/videos
